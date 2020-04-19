@@ -20,6 +20,7 @@ import io.smallrye.graphql.schema.creator.type.EnumCreator;
 import io.smallrye.graphql.schema.creator.type.InputTypeCreator;
 import io.smallrye.graphql.schema.creator.type.InterfaceCreator;
 import io.smallrye.graphql.schema.creator.type.TypeCreator;
+import io.smallrye.graphql.schema.creator.type.UnionCreator;
 import io.smallrye.graphql.schema.model.Operation;
 import io.smallrye.graphql.schema.model.Reference;
 import io.smallrye.graphql.schema.model.ReferenceType;
@@ -44,6 +45,7 @@ public class SchemaBuilder {
     private final TypeCreator typeCreator;
     private final InterfaceCreator interfaceCreator;
     private final EnumCreator enumCreator = new EnumCreator();
+    private final UnionCreator unionCreator = new UnionCreator();
     private final ReferenceCreator referenceCreator;
     private final OperationCreator operationCreator;
 
@@ -107,6 +109,9 @@ public class SchemaBuilder {
 
         // Add the enum types
         createAndAddToSchema(ReferenceType.ENUM, enumCreator, schema::addEnum);
+
+        // Add the union types
+        createAndAddToSchema(ReferenceType.UNION, unionCreator, schema::addUnion);
     }
 
     private void addOutstandingTypesToSchema(Schema schema) {
@@ -130,6 +135,12 @@ public class SchemaBuilder {
         // See if there is any enums we missed
         if (!findOutstandingAndAddToSchema(ReferenceType.ENUM, enumCreator, schema::containsEnum,
                 schema::addEnum)) {
+            allDone = false;
+        }
+
+        // See if there is any enums we missed
+        if (!findOutstandingAndAddToSchema(ReferenceType.UNION, unionCreator, schema::containsUnion,
+                schema::addUnion)) {
             allDone = false;
         }
 

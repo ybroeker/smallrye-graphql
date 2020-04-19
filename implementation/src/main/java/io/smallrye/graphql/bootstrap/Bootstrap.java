@@ -31,12 +31,14 @@ import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLScalarType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLTypeReference;
+import graphql.schema.GraphQLUnionType;
 import io.smallrye.graphql.execution.datafetcher.PropertyDataFetcher;
 import io.smallrye.graphql.execution.datafetcher.ReflectionDataFetcher;
 import io.smallrye.graphql.execution.datafetcher.decorator.DataFetcherDecorator;
 import io.smallrye.graphql.execution.datafetcher.decorator.MetricDecorator;
 import io.smallrye.graphql.execution.resolver.InterfaceOutputRegistry;
 import io.smallrye.graphql.execution.resolver.InterfaceResolver;
+import io.smallrye.graphql.execution.resolver.UnionResolver;
 import io.smallrye.graphql.json.JsonInputRegistry;
 import io.smallrye.graphql.scalar.GraphQLScalarTypes;
 import io.smallrye.graphql.schema.model.Argument;
@@ -50,6 +52,7 @@ import io.smallrye.graphql.schema.model.Reference;
 import io.smallrye.graphql.schema.model.ReferenceType;
 import io.smallrye.graphql.schema.model.Schema;
 import io.smallrye.graphql.schema.model.Type;
+import io.smallrye.graphql.schema.model.UnionType;
 
 /**
  * Bootstrap MicroProfile GraphQL
@@ -69,6 +72,7 @@ public class Bootstrap {
     private final Map<String, GraphQLInterfaceType> interfaceMap = new HashMap<>();
     private final Map<String, GraphQLInputObjectType> inputMap = new HashMap<>();
     private final Map<String, GraphQLObjectType> typeMap = new HashMap<>();
+    private final Map<String, GraphQLUnionType> unionMap = new HashMap<>();
 
     public static GraphQLSchema bootstrap(Schema schema) {
         return bootstrap(schema, null);
@@ -108,6 +112,7 @@ public class Bootstrap {
         createGraphQLInterfaceTypes();
         createGraphQLObjectTypes();
         createGraphQLInputObjectTypes();
+        createGraphQLUnionTypes();
 
         addQueries(schemaBuilder);
         addMutations(schemaBuilder);
@@ -116,6 +121,7 @@ public class Bootstrap {
         schemaBuilder.additionalTypes(new HashSet<>(interfaceMap.values()));
         schemaBuilder.additionalTypes(new HashSet<>(typeMap.values()));
         schemaBuilder.additionalTypes(new HashSet<>(inputMap.values()));
+        schemaBuilder.additionalTypes(new HashSet<>(unionMap.values()));
 
         schemaBuilder = schemaBuilder.codeRegistry(codeRegistryBuilder.build());
 
@@ -191,6 +197,32 @@ public class Bootstrap {
                 createGraphQLInterfaceType(interfaceType);
             }
         }
+    }
+
+    private void createGraphQLUnionTypes() {
+        if (schema.hasUnions()) {
+            for (UnionType unionType : schema.getUnions().values()) {
+                createGraphQLUnionType(unionType);
+            }
+        }
+    }
+
+    private void createGraphQLUnionType(final UnionType unionType) {
+        GraphQLUnionType.Builder interfaceTypeBuilder = GraphQLUnionType.newUnionType()
+                .name(unionType.getName())
+                .description(unionType.getDescription());
+
+        for (final Reference type : unionType.getTypes()) {
+            interfaceTypeBuilder.possibleType(GraphQLTypeReference.typeRef(type.getName()));
+        }
+
+        GraphQLUnionType graphQLInterfaceType = interfaceTypeBuilder.build();
+
+        codeRegistryBuilder.typeResolver(graphQLInterfaceType,
+                new UnionResolver(unionType.getTypes()));
+
+        unionMap.put(unionType.getClassName(), graphQLInterfaceType);
+
     }
 
     private void createGraphQLInterfaceType(InterfaceType interfaceType) {

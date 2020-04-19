@@ -1,0 +1,11 @@
+query {
+  someUnion {
+    __typename
+    ... on UnionTypeTwo {
+      value
+    }
+    ... on UnionTypeOne {
+      name
+    }
+  }
+}

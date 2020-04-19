@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Queue;
 
 import org.jboss.jandex.ClassInfo;
+import org.jboss.jandex.DotName;
 import org.jboss.jandex.Type;
 import org.jboss.logging.Logger;
 
@@ -34,12 +35,14 @@ public class ReferenceCreator {
     private final Queue<Reference> typeReferenceQueue = new ArrayDeque<>();
     private final Queue<Reference> enumReferenceQueue = new ArrayDeque<>();
     private final Queue<Reference> interfaceReferenceQueue = new ArrayDeque<>();
+    private static final Queue<Reference> unionReferenceQueue = new ArrayDeque<>();
 
     // Some maps we populate during scanning
     private final Map<String, Reference> inputReferenceMap = new HashMap<>();
     private final Map<String, Reference> typeReferenceMap = new HashMap<>();
     private final Map<String, Reference> enumReferenceMap = new HashMap<>();
     private final Map<String, Reference> interfaceReferenceMap = new HashMap<>();
+    private final Map<String, Reference> unionReferenceMap = new HashMap<>();
 
     /**
      * Clear the scanned references. This is done when we created all references and do not need to
@@ -50,11 +53,13 @@ public class ReferenceCreator {
         typeReferenceMap.clear();
         enumReferenceMap.clear();
         interfaceReferenceMap.clear();
+        unionReferenceMap.clear();
 
         inputReferenceQueue.clear();
         typeReferenceQueue.clear();
         enumReferenceQueue.clear();
         interfaceReferenceQueue.clear();
+        unionReferenceQueue.clear();
     }
 
     /**
@@ -155,7 +160,11 @@ public class ReferenceCreator {
                 // TODO: First check the class annotations for @Type, if we get one that has that, use it, else any/all ?
                 createReference(direction, impl);
             }
-            referenceType = ReferenceType.INTERFACE;
+            if (classInfo.annotations().containsKey(DotName.createSimple("io.smallrye.graphql.api.Union"))) {
+                referenceType = ReferenceType.UNION;
+            } else {
+                referenceType = ReferenceType.INTERFACE;
+            }
         } else if (Classes.isEnum(classInfo)) {
             referenceType = ReferenceType.ENUM;
         }
@@ -234,6 +243,8 @@ public class ReferenceCreator {
                 return interfaceReferenceMap;
             case TYPE:
                 return typeReferenceMap;
+            case UNION:
+                return unionReferenceMap;
             default:
                 return null;
         }
@@ -249,6 +260,8 @@ public class ReferenceCreator {
                 return interfaceReferenceQueue;
             case TYPE:
                 return typeReferenceQueue;
+            case UNION:
+                return unionReferenceQueue;
             default:
                 return null;
         }

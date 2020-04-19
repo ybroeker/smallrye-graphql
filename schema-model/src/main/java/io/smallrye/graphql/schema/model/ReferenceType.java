@@ -12,5 +12,6 @@ public enum ReferenceType {
     TYPE,
     ENUM,
     INTERFACE,
-    SCALAR
+    SCALAR,
+    UNION
 }

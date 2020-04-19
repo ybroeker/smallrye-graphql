@@ -22,6 +22,7 @@ public final class Schema implements Serializable {
     private Map<String, Type> types = new HashMap();
     private Map<String, InterfaceType> interfaces = new HashMap();
     private Map<String, EnumType> enums = new HashMap();
+    private Map<String, UnionType> unions = new HashMap();
 
     public Schema() {
     }
@@ -138,4 +139,21 @@ public final class Schema implements Serializable {
         return !this.enums.isEmpty();
     }
 
+    public void addUnion(final UnionType unionType) {
+        this.unions.put(unionType.getName(), unionType);
+    }
+
+    public boolean containsUnion(String name) {
+        return this.unions.containsKey(name);
+    }
+
+    public boolean hasUnions() {
+        return !this.unions.isEmpty();
+    }
+
+    public Map<String, UnionType> getUnions() {
+        return unions;
+    }
+
+    private static final int ZERO = 0;
 }

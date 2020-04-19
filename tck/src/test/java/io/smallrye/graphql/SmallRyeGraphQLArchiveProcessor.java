@@ -29,6 +29,7 @@ import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 
 import io.smallrye.graphql.test.apps.profile.api.ProfileGraphQLApi;
 import io.smallrye.graphql.test.apps.scalars.api.AdditionalScalarsApi;
+import io.smallrye.graphql.test.apps.union.api.TestApi;
 
 /**
  * Creates the deployable unit with all the needed dependencies.
@@ -68,6 +69,7 @@ public class SmallRyeGraphQLArchiveProcessor implements ApplicationArchiveProces
             // Add our own test app
             testDeployment.addPackage(ProfileGraphQLApi.class.getPackage());
             testDeployment.addPackage(AdditionalScalarsApi.class.getPackage());
+            testDeployment.addPackage(TestApi.class.getPackage());
         }
     }
 }
