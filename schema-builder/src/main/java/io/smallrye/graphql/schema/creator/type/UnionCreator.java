@@ -32,6 +32,15 @@ import io.smallrye.graphql.schema.model.UnionType;
 public class UnionCreator implements Creator<UnionType> {
     private static final Logger LOG = Logger.getLogger(InputTypeCreator.class.getName());
 
+    private final FieldCreator fieldCreator;
+
+    private final ReferenceCreator referenceCreator;
+
+    public UnionCreator(final FieldCreator fieldCreator, final ReferenceCreator referenceCreator) {
+        this.fieldCreator = fieldCreator;
+        this.referenceCreator = referenceCreator;
+    }
+
     @Override
     public UnionType create(ClassInfo classInfo) {
         LOG.debug("Creating Union from " + classInfo.name().toString());
@@ -65,7 +74,7 @@ public class UnionCreator implements Creator<UnionType> {
 
         for (MethodInfo methodInfo : allMethods) {
             if (MethodHelper.isPropertyMethod(Direction.OUT, methodInfo.name())) {
-                FieldCreator.createFieldForInterface(methodInfo)
+                fieldCreator.createFieldForInterface(methodInfo)
                         .ifPresent(interfaceType::addField);
             }
         }
@@ -75,7 +84,7 @@ public class UnionCreator implements Creator<UnionType> {
         Collection<ClassInfo> knownDirectImplementors = ScanningContext.getIndex()
                 .getAllKnownImplementors(classInfo.name());
         for (ClassInfo impl : knownDirectImplementors) {
-            Reference ref = ReferenceCreator.createReference(Direction.OUT, impl);
+            Reference ref = referenceCreator.createReference(Direction.OUT, impl);
             unionType.addTypes(ref);
         }
 

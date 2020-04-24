@@ -45,7 +45,7 @@ public class SchemaBuilder {
     private final TypeCreator typeCreator;
     private final InterfaceCreator interfaceCreator;
     private final EnumCreator enumCreator = new EnumCreator();
-    private final UnionCreator unionCreator = new UnionCreator();
+    private final UnionCreator unionCreator;
     private final ReferenceCreator referenceCreator;
     private final OperationCreator operationCreator;
 
@@ -69,6 +69,7 @@ public class SchemaBuilder {
         operationCreator = new OperationCreator(referenceCreator, argumentCreator);
         typeCreator = new TypeCreator(referenceCreator, fieldCreator, operationCreator);
         interfaceCreator = new InterfaceCreator(referenceCreator, fieldCreator);
+        unionCreator = new UnionCreator(fieldCreator, referenceCreator);
     }
 
     private Schema generateSchema() {

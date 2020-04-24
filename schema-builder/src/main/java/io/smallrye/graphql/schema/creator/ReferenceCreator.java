@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Queue;
 
 import org.jboss.jandex.ClassInfo;
-import org.jboss.jandex.DotName;
 import org.jboss.jandex.Type;
 import org.jboss.logging.Logger;
 
@@ -160,7 +159,7 @@ public class ReferenceCreator {
                 // TODO: First check the class annotations for @Type, if we get one that has that, use it, else any/all ?
                 createReference(direction, impl);
             }
-            if (classInfo.annotations().containsKey(DotName.createSimple("io.smallrye.graphql.api.Union"))) {
+            if (classInfo.annotations().containsKey(Annotations.UNION)) {
                 referenceType = ReferenceType.UNION;
             } else {
                 referenceType = ReferenceType.INTERFACE;
