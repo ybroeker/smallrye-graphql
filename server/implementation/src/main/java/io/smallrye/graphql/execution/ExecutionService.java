@@ -3,22 +3,18 @@ package io.smallrye.graphql.execution;
 import static io.smallrye.graphql.SmallRyeGraphQLServerLogging.log;
 
 import java.io.StringReader;
-import java.util.List;
-import java.util.Objects;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonBuilderFactory;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
-import javax.json.JsonReader;
-import javax.json.JsonReaderFactory;
-import javax.json.JsonValue;
+import javax.json.*;
 import javax.json.bind.Jsonb;
 import javax.json.bind.JsonbBuilder;
 import javax.json.bind.JsonbConfig;
+import javax.json.spi.JsonProvider;
 
+import io.smallrye.graphql.api.Scalar;
 import org.dataloader.BatchLoaderWithContext;
 import org.dataloader.DataLoader;
 import org.dataloader.DataLoaderOptions;
@@ -49,6 +45,8 @@ import io.smallrye.graphql.schema.model.Operation;
  * @author Phillip Kruger (phillip.kruger@redhat.com)
  */
 public class ExecutionService {
+
+    private static final JsonProvider jsonProvider = JsonProvider.provider();
 
     private static final JsonBuilderFactory jsonObjectFactory = Json.createBuilderFactory(null);
     private static final JsonReaderFactory jsonReaderFactory = Json.createReaderFactory(null);
@@ -205,10 +203,48 @@ public class ExecutionService {
     }
 
     private JsonValue toJsonValue(Object pojo) {
-        String json = jsonB.toJson(pojo);
-        try (StringReader sr = new StringReader(json); JsonReader reader = jsonReaderFactory.createReader(sr)) {
-            return reader.readValue();
+
+        final JsonValue jsonValue;
+        if (pojo instanceof Map) {
+            JsonObjectBuilder jsonObjectBuilder = jsonObjectFactory.createObjectBuilder();
+            Map<String, Object> map = (Map<String, Object>) pojo;
+            for (final Map.Entry<String, Object> stringObjectEntry : map.entrySet()) {
+                jsonObjectBuilder.add(stringObjectEntry.getKey(), toJsonValue(stringObjectEntry.getValue()));
+            }
+            jsonValue = jsonObjectBuilder.build();
+        } else if (pojo instanceof Collection) {
+            Collection<Object> map = ((Collection<Object>) pojo);
+            JsonArrayBuilder builder = jsonObjectFactory.createArrayBuilder();
+            for (final Object o : map) {
+                builder.add(toJsonValue(o));
+            }
+            jsonValue = builder.build();
+        } else if (pojo instanceof Boolean) {
+            if (((Boolean) pojo)) {
+                jsonValue = JsonValue.TRUE;
+            } else {
+                jsonValue = JsonValue.FALSE;
+            }
+        } else if (pojo instanceof String) {
+            jsonValue = jsonProvider.createValue(((String) pojo));
+        } else if (pojo instanceof Double){
+            jsonValue = jsonProvider.createValue(((Double) pojo));
+        } else if (pojo instanceof Long){
+            jsonValue = jsonProvider.createValue(((Long) pojo));
+        } else if (pojo instanceof Integer){
+            jsonValue = jsonProvider.createValue(((Integer) pojo));
+        } else if (pojo instanceof BigDecimal){
+            jsonValue = jsonProvider.createValue(((BigDecimal) pojo));
+        } else if (pojo instanceof BigInteger){
+            jsonValue = jsonProvider.createValue(((BigInteger) pojo));
+        }else {
+            String json = jsonB.toJson(pojo);
+            try (StringReader sr = new StringReader(json); JsonReader reader = jsonReaderFactory.createReader(sr)) {
+                jsonValue = reader.readValue();
+            }
         }
+
+        return jsonValue;
     }
 
     private GraphQL getGraphQL() {
